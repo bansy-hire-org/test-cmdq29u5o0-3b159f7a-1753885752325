@@ -1,0 +1,57 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Install dependencies
+      run: dotnet restore TaskManagement.Api/TaskManagement.Api.csproj
+
+    - name: Build
+      run: dotnet build TaskManagement.Api/TaskManagement.Api.csproj --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test TaskManagement.Tests/TaskManagement.Tests.csproj --no-restore --verbosity normal
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: TaskManagement.Tests/TestResults
+        retention-days: 5
+
+  report-status:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get test results
+        uses: actions/download-artifact@v3
+        with:
+          name: test-results
+      - name: Parse test results
+        run: |
+          echo "Parsing test results..."
+          ls -R
+      - name: Create GitHub Issue from Failed Tests
+        # This is a placeholder for a more advanced implementation
+        # that would automatically parse the test results and create issues
+        # for each failed test.  This is a common best practice in CI/CD.
+        run: |
+          echo "Creating a GitHub Issue for failed tests..."
+          echo "This step would normally parse the test results and create a new issue if tests failed."
